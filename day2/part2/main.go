@@ -38,9 +38,9 @@ func getLettersInCommon(box1, box2 string) string {
 	}
 
 	commonLetters := ""
-	for i := range box1 {
+	for i, letter := range box1 {
 		if box1[i] == box2[i] {
-			commonLetters += string(box1[i])
+			commonLetters += string(letter)
 		}
 	}
 
@@ -52,10 +52,9 @@ func getNumDifferentLetters(box1, box2 string) int {
 		return -1
 	}
 	diffCount := 0
-	for i := range box1 {
-		if box1[i] != box2[i] {
-			diffCount++
-		}
+	commonString := getLettersInCommon(box1, box2)
+	if len(commonString) == len(box1)-1 {
+		diffCount++
 	}
 
 	return diffCount
