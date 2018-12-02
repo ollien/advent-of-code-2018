@@ -23,7 +23,7 @@ func main() {
 	// trim trailing newline
 	rawNums = rawNums[:len(rawNums)-1]
 
-	totals := []int{0}
+	totals := map[int]int{0: 1}
 	lastTotal := 0
 	for i := 0; ; i = (i + 1) % len(rawNums) {
 		num, err := strconv.Atoi(rawNums[i])
@@ -31,14 +31,12 @@ func main() {
 			panic(err)
 		}
 		newTotal := lastTotal + num
-		for _, total := range totals {
-			if newTotal == total {
-				fmt.Println(newTotal)
-				return
-			}
+		if _, ok := totals[newTotal]; ok {
+			fmt.Println(newTotal)
+			return
 		}
 
-		totals = append(totals, newTotal)
+		totals[newTotal] = 1
 		lastTotal = newTotal
 	}
 }
