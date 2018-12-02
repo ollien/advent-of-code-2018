@@ -31,41 +31,14 @@ func main() {
 			panic(err)
 		}
 		newTotal := lastTotal + num
-		if binarySearch(totals, newTotal) != -1 {
-			fmt.Println(newTotal)
-			return
+		for _, total := range totals {
+			if newTotal == total {
+				fmt.Println(newTotal)
+				return
+			}
 		}
 
-		totals = insertSorted(totals, newTotal)
+		totals = append(totals, newTotal)
 		lastTotal = newTotal
 	}
-}
-
-func insertSorted(nums []int, newNum int) []int {
-	for i, num := range nums {
-		if newNum < num {
-			return append(nums[:i], append([]int{newNum}, nums[i:]...)...)
-		}
-	}
-
-	return append(nums, newNum)
-}
-
-func binarySearch(nums []int, target int) int {
-	hitList := make([]int, len(nums))
-	copy(hitList, nums)
-	offset := 0
-	for len(hitList) != 0 {
-		midIndex := len(hitList) / 2
-		if target > hitList[midIndex] {
-			offset += midIndex + 1
-			hitList = hitList[midIndex+1:]
-		} else if target < hitList[midIndex] {
-			hitList = hitList[:midIndex]
-		} else {
-			return midIndex + offset
-		}
-	}
-
-	return -1
 }
