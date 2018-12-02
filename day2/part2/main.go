@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -37,14 +38,14 @@ func getLettersInCommon(box1, box2 string) string {
 		return ""
 	}
 
-	commonLetters := ""
+	commonLetters := new(bytes.Buffer)
 	for i, letter := range box1 {
 		if box1[i] == box2[i] {
-			commonLetters += string(letter)
+			commonLetters.WriteRune(letter)
 		}
 	}
 
-	return commonLetters
+	return commonLetters.String()
 }
 
 func getNumDifferentLetters(box1, box2 string) int {
