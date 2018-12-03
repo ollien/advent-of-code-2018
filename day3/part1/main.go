@@ -10,10 +10,10 @@ import (
 )
 
 type piece struct {
-	x      int
-	y      int
-	width  int
+	row    int
+	col    int
 	height int
+	width  int
 }
 
 func parsePuzzleLine(line string) (piece, error) {
@@ -25,12 +25,12 @@ func parsePuzzleLine(line string) (piece, error) {
 	matches := pattern.FindStringSubmatch(line)
 	parsedPiece := piece{}
 
-	parsedPiece.x, err = strconv.Atoi(matches[1])
+	parsedPiece.col, err = strconv.Atoi(matches[1])
 	if err != nil {
 		return piece{}, err
 	}
 
-	parsedPiece.y, err = strconv.Atoi(matches[2])
+	parsedPiece.row, err = strconv.Atoi(matches[2])
 	if err != nil {
 		return piece{}, err
 	}
@@ -52,12 +52,12 @@ func getMaxDimensions(pieces []piece) (int, int) {
 	maxWidth := 0
 	maxHeight := 0
 	for _, checkPiece := range pieces {
-		heightCandidate := checkPiece.y + checkPiece.height
+		heightCandidate := checkPiece.row + checkPiece.height
 		if heightCandidate > maxHeight {
 			maxHeight = heightCandidate
 		}
 
-		widthCandidate := checkPiece.x + checkPiece.width
+		widthCandidate := checkPiece.col + checkPiece.width
 		if widthCandidate > maxWidth {
 			maxWidth = widthCandidate
 		}
@@ -67,11 +67,11 @@ func getMaxDimensions(pieces []piece) (int, int) {
 }
 
 func insertPiece(insertingPiece piece, cloth [][]int) {
-	maxX := insertingPiece.x + insertingPiece.width
-	maxY := insertingPiece.y + insertingPiece.height
-	for y := insertingPiece.y; y < maxY; y++ {
-		for x := insertingPiece.x; x < maxX; x++ {
-			cloth[y][x]++
+	maxCol := insertingPiece.col + insertingPiece.width
+	maxRow := insertingPiece.row + insertingPiece.height
+	for row := insertingPiece.row; row < maxRow; row++ {
+		for col := insertingPiece.col; col < maxCol; col++ {
+			cloth[row][col]++
 		}
 	}
 }
