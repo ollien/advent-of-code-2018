@@ -94,12 +94,12 @@ func parseLog(logLines []string) ([]logLine, error) {
 }
 
 // getSleepInfo gets the amount of time the guard is asleep and their sleepiest time
-func getSleepInfo(sleepTimes []int) (totalSleepCount int, sleepiestTime int) {
-	sleepiestCount := 0
-	for sleepTime, sleepCount := range sleepTimes {
-		totalSleepCount += sleepCount
-		if sleepCount > sleepiestCount {
-			sleepiestCount = sleepCount
+func getSleepInfo(sleepTimes []int) (totalTimeSlept int, sleepiestTime int) {
+	mostTimeSlept := 0
+	for sleepTime, timeSlept := range sleepTimes {
+		totalTimeSlept += timeSlept
+		if timeSlept > mostTimeSlept {
+			mostTimeSlept = timeSlept
 			sleepiestTime = sleepTime
 		}
 	}
