@@ -122,6 +122,22 @@ func constructSleepLog(log logData, sleepLog map[int][]int) {
 	}
 }
 
+func part1(sleepLog map[int][]int) int {
+	sleepiestGuard := -1
+	sleepiestGuardTime := 0
+	sleepiestTimeForGuard := -1
+	for guardID, guardInfo := range sleepLog {
+		totalSleepTime, sleepiestTime := getSleepInfo(guardInfo)
+		if totalSleepTime > sleepiestGuardTime {
+			sleepiestGuard = guardID
+			sleepiestGuardTime = totalSleepTime
+			sleepiestTimeForGuard = sleepiestTime
+		}
+	}
+
+	return sleepiestGuard * sleepiestTimeForGuard
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -145,17 +161,5 @@ func main() {
 
 	constructSleepLog(parsedLog, sleepLog)
 
-	sleepiestGuard := -1
-	sleepiestGuardTime := 0
-	sleepiestTimeForGuard := -1
-	for guardID, guardInfo := range sleepLog {
-		totalSleepTime, sleepiestTime := getSleepInfo(guardInfo)
-		if totalSleepTime > sleepiestGuardTime {
-			sleepiestGuard = guardID
-			sleepiestGuardTime = totalSleepTime
-			sleepiestTimeForGuard = sleepiestTime
-		}
-	}
-
-	fmt.Println(sleepiestGuard * sleepiestTimeForGuard)
+	fmt.Println(part1(sleepLog))
 }
