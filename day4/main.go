@@ -48,7 +48,9 @@ func (data logData) Less(i int, j int) bool {
 }
 
 func parseLogLine(line string) (logLine, error) {
+	// Split the timestamp from the action
 	lineComponents := strings.Split(line, "] ")
+	// Remove the leading bracket from the time and store the components
 	rawTime, action := lineComponents[0][1:], lineComponents[1]
 	parsedTime, err := time.Parse(timeFormat, rawTime)
 	if err != nil {
@@ -64,6 +66,7 @@ func parseLogLine(line string) (logLine, error) {
 		return lineInfo, nil
 	}
 
+	// Get guard number for shift start
 	numMatched, err := fmt.Sscanf(action, shiftTriggerFormat, &lineInfo.guardID)
 	if err != nil {
 		return logLine{}, err
@@ -74,6 +77,7 @@ func parseLogLine(line string) (logLine, error) {
 	return lineInfo, nil
 }
 
+// parseLog parses all log lines and returns a sorted output
 func parseLog(logLines []string) ([]logLine, error) {
 	result := make(logData, 0, len(logLines))
 	for _, line := range logLines {
@@ -89,7 +93,7 @@ func parseLog(logLines []string) ([]logLine, error) {
 	return result, nil
 }
 
-// Gets the amount of time the guard is asleep and their sleepiest time
+// getSleepInfo gets the amount of time the guard is asleep and their sleepiest time
 func getSleepInfo(sleepTimes []int) (totalSleepCount int, sleepiestTime int) {
 	sleepiestCount := 0
 	for sleepTime, sleepCount := range sleepTimes {
@@ -102,7 +106,9 @@ func getSleepInfo(sleepTimes []int) (totalSleepCount int, sleepiestTime int) {
 	return
 }
 
-func constructSleepLog(log logData, sleepLog map[int][]int) {
+// constructSleepLog construts a log of the number of times a guard id (key) was asleep at the given time (index in value slice)
+func constructSleepLog(log logData) map[int][]int {
+	sleepLog := make(map[int][]int)
 	currentGuard := -1
 	sleepTime := time.Time{}
 	for _, lineInfo := range log {
@@ -120,6 +126,8 @@ func constructSleepLog(log logData, sleepLog map[int][]int) {
 			}
 		}
 	}
+
+	return sleepLog
 }
 
 func part1(sleepLog map[int][]int) int {
@@ -171,13 +179,11 @@ func main() {
 	// trim trailing newline
 	logLines = logLines[:len(logLines)-1]
 
-	sleepLog := make(map[int][]int)
 	parsedLog, err := parseLog(logLines)
 	if err != nil {
 		panic(err)
 	}
-
-	constructSleepLog(parsedLog, sleepLog)
+	sleepLog := constructSleepLog(parsedLog)
 
 	fmt.Println(part1(sleepLog))
 	fmt.Println(part2(sleepLog))
