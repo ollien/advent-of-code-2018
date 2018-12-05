@@ -21,35 +21,21 @@ func shouldAnihalate(chain string) bool {
 	return false
 }
 
-func findReactingIndex(polymer string) int {
-	for i := 0; i < len(polymer)-1; i++ {
-		if shouldAnihalate(polymer[i : i+2]) {
-			return i
+func performReaction(polymer string) int {
+	reaction_buffer := make([]rune, 0, len(polymer))
+	for _, chr := range polymer {
+		if len(reaction_buffer) > 0 && shouldAnihalate(string(chr)+string(reaction_buffer[len(reaction_buffer)-1])) {
+			reaction_buffer = reaction_buffer[:len(reaction_buffer)-1]
+		} else {
+			reaction_buffer = append(reaction_buffer, chr)
 		}
 	}
 
-	return -1
-}
-
-func performReaction(polymer string, reactIndex int) string {
-	result := polymer[:reactIndex]
-	if reactIndex == len(polymer)-2 {
-		return result
-	} else {
-		return result + polymer[reactIndex+2:]
-	}
-
+	return len(reaction_buffer)
 }
 
 func part1(polymer string) int {
-	reactedPolymer := polymer
-	reactIndex := findReactingIndex(reactedPolymer)
-	for reactIndex != -1 {
-		reactedPolymer = performReaction(reactedPolymer, reactIndex)
-		reactIndex = findReactingIndex(reactedPolymer)
-	}
-
-	return len(reactedPolymer)
+	return performReaction(polymer)
 }
 
 func part2(polymer string) int {
