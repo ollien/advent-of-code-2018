@@ -52,6 +52,21 @@ func part1(polymer string) int {
 	return len(reactedPolymer)
 }
 
+func part2(polymer string) int {
+	smallestLen := len(polymer)
+	for element := 'a'; element <= 'z'; element++ {
+		strippedPolymer := polymer
+		strippedPolymer = strings.Replace(strippedPolymer, string(element), "", -1)
+		strippedPolymer = strings.Replace(strippedPolymer, strings.ToUpper(string(element)), "", -1)
+		reactedLen := part1(strippedPolymer)
+		if reactedLen < smallestLen {
+			smallestLen = reactedLen
+		}
+	}
+
+	return smallestLen
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -66,4 +81,5 @@ func main() {
 
 	polymer := strings.TrimSuffix(string(inFileContents), "\n")
 	fmt.Println(part1(polymer))
+	fmt.Println(part2(polymer))
 }
