@@ -96,7 +96,7 @@ func populateBoardWithDistance(board [][]int, coords []coordinate) {
 	}
 }
 
-// isBounded returns true if a board has a finite area
+// isBounded returns true if a board region has a finite area
 func isBounded(board [][]int, loc coordinate) bool {
 	if board[loc.row][0] == board[loc.row][loc.col] || board[loc.row][len(board[loc.row])-1] == board[loc.row][loc.col] {
 		return false
