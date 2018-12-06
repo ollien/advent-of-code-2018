@@ -76,6 +76,26 @@ func populateBoardWithNearest(board [][]int, coords []coordinate) {
 	}
 }
 
+// findTotalOfSitances finds the total of the distances to a location from the coordinates
+func findTotalOfDistances(loc coordinate, coords []coordinate) int {
+	totalDistance := 0
+	for _, coord := range coords {
+		rowDistance := float64(coord.row - loc.row)
+		colDistance := float64(coord.col - loc.col)
+		totalDistance += int(math.Abs(rowDistance)) + int(math.Abs(colDistance))
+	}
+
+	return totalDistance
+}
+
+func populateBoardWithDistance(board [][]int, coords []coordinate) {
+	for i := range board {
+		for j := range board[i] {
+			board[i][j] = findTotalOfDistances(coordinate{i, j}, coords)
+		}
+	}
+}
+
 // isBounded returns true if a board has a finite area
 func isBounded(board [][]int, loc coordinate) bool {
 	if board[loc.row][0] == board[loc.row][loc.col] || board[loc.row][len(board[loc.row])-1] == board[loc.row][loc.col] {
@@ -116,6 +136,20 @@ func part1(board [][]int, coords []coordinate) int {
 	return largestArea
 }
 
+func part2(board [][]int, coords []coordinate) int {
+	populateBoardWithDistance(board, coords)
+	safeTiles := 0
+	for i := range board {
+		for j := range board[i] {
+			if board[i][j] < 10000 {
+				safeTiles++
+			}
+		}
+	}
+
+	return safeTiles
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -142,4 +176,5 @@ func main() {
 	}
 
 	fmt.Println(part1(board, coords))
+	fmt.Println(part2(board, coords))
 }
