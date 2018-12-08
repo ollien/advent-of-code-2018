@@ -45,7 +45,7 @@ func parseInstructions(rawInstructions []string) (instructionList, error) {
 	return instructions, nil
 }
 
-func findReadySteps(instructions instructionList) []string {
+func (instructions instructionList) findReadySteps() []string {
 	entrypointCandidates := make([]string, 0)
 	for instructionName := range instructions {
 		if len(instructions[instructionName]) == 0 {
@@ -58,7 +58,7 @@ func findReadySteps(instructions instructionList) []string {
 	return entrypointCandidates
 }
 
-func markAsDone(doneInstructionName string, instructions instructionList) {
+func (instructions instructionList) markAsDone(doneInstructionName string) {
 	for instructionName, instruction := range instructions {
 		doneIndex := -1
 		for i, dependencyName := range instruction {
@@ -75,11 +75,11 @@ func markAsDone(doneInstructionName string, instructions instructionList) {
 	delete(instructions, doneInstructionName)
 }
 
-func resolveDependencies(instructions instructionList) string {
+func (instructions instructionList) resolveDependencies() string {
 	instructionSet := ""
 	for len(instructions) > 0 {
-		for _, readyStep := range findReadySteps(instructions) {
-			markAsDone(readyStep, instructions)
+		for _, readyStep := range instructions.findReadySteps() {
+			instructions.markAsDone(readyStep)
 			instructionSet += readyStep
 		}
 	}
@@ -88,7 +88,7 @@ func resolveDependencies(instructions instructionList) string {
 }
 
 func part1(instructions instructionList) string {
-	return resolveDependencies(instructions)
+	return instructions.resolveDependencies()
 }
 
 func main() {
