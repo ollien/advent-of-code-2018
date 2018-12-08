@@ -145,6 +145,14 @@ func (workers workerList) work() {
 	}
 }
 
+// Relieve any workers who have finished their work
+func (workers workerList) relieve() {
+	doneJobs := workers.getDoneWorkers()
+	for _, doneJob := range doneJobs {
+		workers[doneJob].name = ""
+	}
+}
+
 func part1(instructions instructionList) string {
 	return instructions.resolveDependencies()
 }
@@ -158,16 +166,14 @@ func part2(instructions instructionList) int {
 	time := 0
 	workers := make(workerList, numWorkers)
 	workQueue := instructions.findReadySteps()
+	// While workers are working or there is new work to be done
 	for len(workQueue) > 0 || !workers.allIdle() {
 		workers.work()
-		doneJobs := workers.getDoneWorkers()
-		availableWorker := workers.findReadyWorker()
-		for _, doneJob := range doneJobs {
-			workers[doneJob].name = ""
-			if len(workQueue) == 0 {
-				workQueue = instructions.findReadySteps()
-			}
+		workers.relieve()
+		if len(workQueue) == 0 {
+			workQueue = instructions.findReadySteps()
 		}
+		availableWorker := workers.findReadyWorker()
 		// Store all items that cannot be worked on yet
 		invalidItems := make([]string, 0)
 		for len(workQueue) > 0 && availableWorker != -1 {
