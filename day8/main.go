@@ -17,14 +17,14 @@ func sumUntil(arr []int, max int) int {
 	return total
 }
 
-func parseTree(tree []int, numNodes int) (int, int) {
+func findTreeTotal(tree []int, numNodes int) (int, int) {
 	total := 0
 	cursor := 0
 	for i := 0; i < numNodes; i++ {
 		children, metadataCount := tree[0], tree[1]
 		// Remove the tree header
 		tree = tree[2:]
-		n, subtotal := parseTree(tree, children)
+		n, subtotal := findTreeTotal(tree, children)
 		// Remove the part that the subtree parsed
 		tree = tree[n:]
 		// Sum and remove the metadata part from the tree
@@ -38,7 +38,7 @@ func parseTree(tree []int, numNodes int) (int, int) {
 }
 
 func part1(tree []int) int {
-	_, total := parseTree(tree, 1)
+	_, total := findTreeTotal(tree, 1)
 	return total
 }
 
