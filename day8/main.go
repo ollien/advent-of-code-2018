@@ -8,7 +8,6 @@ import (
 	"strings"
 )
 
-// only used for part 2
 type node struct {
 	value       int
 	childValues []int
@@ -23,26 +22,6 @@ func sumUntil(arr []int, max int) int {
 	return total
 }
 
-func findTreeTotal(tree []int, numNodes int) (int, int) {
-	total := 0
-	cursor := 0
-	for i := 0; i < numNodes; i++ {
-		children, metadataCount := tree[0], tree[1]
-		// Remove the tree header
-		tree = tree[2:]
-		n, subtotal := findTreeTotal(tree, children)
-		// Remove the part that the subtree parsed
-		tree = tree[n:]
-		// Sum and remove the metadata part from the tree
-		total += sumUntil(tree, metadataCount) + subtotal
-		tree = tree[metadataCount:]
-		// Advance the cursor that we will return past the metadata and the subtrees
-		cursor += metadataCount + 2 + n
-	}
-
-	return cursor, total
-}
-
 func getChildValuesFromMetadata(tree []int, numValues int, children []node) int {
 	total := 0
 	for i := 0; i < numValues; i++ {
@@ -55,19 +34,23 @@ func getChildValuesFromMetadata(tree []int, numValues int, children []node) int 
 	return total
 }
 
-func calculateRootNode(tree []int, numNodes int) (int, []node) {
+func parseTree(tree []int, numNodes int) (int, int, []node) {
 	nodes := make([]node, numNodes)
 	cursor := 0
+	total := 0
 	for i := 0; i < numNodes; i++ {
 		numChildren, metadataCount := tree[0], tree[1]
 		// Remove the tree header
 		tree = tree[2:]
-		n, children := calculateRootNode(tree, numChildren)
+		n, subtotal, children := parseTree(tree, numChildren)
 		// Remove the part that the subtree parsed
 		tree = tree[n:]
+		// Get the data total of the metadata
+		metadataValue := sumUntil(tree, metadataCount)
+		total += subtotal + metadataValue
 		if numChildren == 0 {
 			// Extract the value of the metadata
-			nodes[i].value = sumUntil(tree, metadataCount)
+			nodes[i].value = metadataValue
 		} else {
 			nodes[i].value = getChildValuesFromMetadata(tree, metadataCount, children)
 			// Copy the values of the children into our node
@@ -76,22 +59,12 @@ func calculateRootNode(tree []int, numNodes int) (int, []node) {
 				nodes[i].childValues[j] = children[j].value
 			}
 		}
+		// Remove the metadata from the tree and advance the cursor accordingly
 		tree = tree[metadataCount:]
-		// Advance the cursor that we will return past the metadata and the subtrees
 		cursor += metadataCount + 2 + n
 	}
 
-	return cursor, nodes
-}
-
-func part1(tree []int) int {
-	_, total := findTreeTotal(tree, 1)
-	return total
-}
-
-func part2(tree []int) int {
-	_, rootedTree := calculateRootNode(tree, 1)
-	return rootedTree[0].value
+	return cursor, total, nodes
 }
 
 func main() {
@@ -115,6 +88,7 @@ func main() {
 		}
 		tree = append(tree, result)
 	}
-	fmt.Println(part1(tree))
-	fmt.Println(part2(tree))
+	_, total, rootedTree := parseTree(tree, 1)
+	fmt.Println(total)
+	fmt.Println(rootedTree[0].value)
 }
