@@ -12,9 +12,16 @@ const (
 	instructionStringFormat = "Step %s must be finished before step %s can begin."
 	malformedError          = "malformed input"
 	noeEntrypointError      = "no entrypoint"
+	numWorkers              = 5
 )
 
 type instructionList map[string][]string
+type workerList []workerJob
+
+type workerJob struct {
+	name           string
+	stepsRemaining int
+}
 
 func parseInstructions(rawInstructions []string) (instructionList, error) {
 	instructions := make(instructionList)
@@ -87,8 +94,101 @@ func (instructions instructionList) resolveDependencies() string {
 	return instructionSet
 }
 
+func (workers workerList) findReadyWorker() int {
+	for worker, job := range workers {
+		if job.stepsRemaining == 0 {
+			return worker
+		}
+	}
+
+	return -1
+}
+
+func (workers workerList) allIdle() bool {
+	for _, job := range workers {
+		if job.stepsRemaining > 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (workers workerList) getDoneWorkers() []int {
+	jobs := make([]int, 0)
+	for i, job := range workers {
+		if job.stepsRemaining == 0 && job.name != "" {
+			jobs = append(jobs, i)
+		}
+	}
+
+	return jobs
+}
+
+func (workers workerList) makingDependency(desiredJob string, instructions instructionList) bool {
+	for _, dependency := range instructions[desiredJob] {
+		for _, job := range workers {
+			if job.name == dependency {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (workers workerList) work() {
+	for i := range workers {
+		if workers[i].stepsRemaining > 0 {
+			workers[i].stepsRemaining--
+		}
+	}
+}
+
 func part1(instructions instructionList) string {
 	return instructions.resolveDependencies()
+}
+
+func part2(instructions instructionList) int {
+	allInstructions := make(instructionList)
+	for instruction, dependencies := range instructions {
+		allInstructions[instruction] = make([]string, len(dependencies))
+		copy(allInstructions[instruction], dependencies)
+	}
+	time := 0
+	workers := make(workerList, numWorkers)
+	workQueue := instructions.findReadySteps()
+	for len(workQueue) > 0 || !workers.allIdle() {
+		workers.work()
+		doneJobs := workers.getDoneWorkers()
+		availableWorker := workers.findReadyWorker()
+		for _, doneJob := range doneJobs {
+			workers[doneJob].name = ""
+			if len(workQueue) == 0 {
+				workQueue = instructions.findReadySteps()
+			}
+		}
+		// Store all items that cannot be worked on yet
+		invalidItems := make([]string, 0)
+		for len(workQueue) > 0 && availableWorker != -1 {
+			var job string
+			job, workQueue = workQueue[0], workQueue[1:]
+			if workers.makingDependency(job, allInstructions) {
+				invalidItems = append(invalidItems, job)
+				continue
+			}
+			workers[availableWorker].name = job
+			workers[availableWorker].stepsRemaining = int(rune(job[0])-'A') + 61
+			instructions.markAsDone(job)
+			availableWorker = workers.findReadyWorker()
+		}
+		// Add the items that cannot be worked on yet to the queue
+		workQueue = append(invalidItems, workQueue...)
+		time++
+	}
+
+	// Exclude the time tick needed to set up the jobs
+	return time - 1
 }
 
 func main() {
@@ -112,5 +212,12 @@ func main() {
 	}
 
 	fmt.Println(part1(instructions))
+
+	// Reparse after depleting instruction list
+	instructions, err = parseInstructions(rawInstructions)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(part2(instructions))
 
 }
