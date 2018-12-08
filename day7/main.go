@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"sort"
 	"strings"
@@ -138,10 +139,30 @@ func (workers workerList) makingDependency(desiredJob string, instructions instr
 }
 
 func (workers workerList) work() {
+	stepSize := workers.getMinStepsRemaining()
 	for i := range workers {
 		if workers[i].stepsRemaining > 0 {
-			workers[i].stepsRemaining--
+			workers[i].stepsRemaining -= stepSize
 		}
+	}
+}
+
+func (workers workerList) getMinStepsRemaining() int {
+	minTime := math.MaxInt32
+	allZero := true
+	for _, worker := range workers {
+		if worker.stepsRemaining != 0 {
+			allZero = false
+		}
+		if worker.stepsRemaining < minTime && worker.stepsRemaining > 0 {
+			minTime = worker.stepsRemaining
+		}
+	}
+
+	if allZero {
+		return 0
+	} else {
+		return minTime
 	}
 }
 
@@ -190,11 +211,10 @@ func part2(instructions instructionList) int {
 		}
 		// Add the items that cannot be worked on yet to the queue
 		workQueue = append(invalidItems, workQueue...)
-		time++
+		time += workers.getMinStepsRemaining()
 	}
 
-	// Exclude the time tick needed to set up the jobs
-	return time - 1
+	return time
 }
 
 func main() {
