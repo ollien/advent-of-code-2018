@@ -216,7 +216,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	fmt.Println(part1(instructions))
 
 	// Reparse after depleting instruction list
