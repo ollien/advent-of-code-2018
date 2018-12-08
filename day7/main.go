@@ -45,21 +45,17 @@ func parseInstructions(rawInstructions []string) (instructionList, error) {
 	return instructions, nil
 }
 
-func findReadyStep(instructions instructionList) string {
+func findReadySteps(instructions instructionList) []string {
 	entrypointCandidates := make([]string, 0)
 	for instructionName := range instructions {
 		if len(instructions[instructionName]) == 0 {
 			entrypointCandidates = append(entrypointCandidates, instructionName)
 		}
 	}
-	smallestAlphabetically := entrypointCandidates[0]
-	for _, candidate := range entrypointCandidates[1:] {
-		if strings.Compare(candidate, smallestAlphabetically) < 0 {
-			smallestAlphabetically = candidate
-		}
-	}
 
-	return smallestAlphabetically
+	sort.Strings(entrypointCandidates)
+
+	return entrypointCandidates
 }
 
 func markAsDone(doneInstructionName string, instructions instructionList) {
@@ -82,9 +78,10 @@ func markAsDone(doneInstructionName string, instructions instructionList) {
 func resolveDependencies(instructions instructionList) string {
 	instructionSet := ""
 	for len(instructions) > 0 {
-		readyStep := findReadyStep(instructions)
-		markAsDone(readyStep, instructions)
-		instructionSet += readyStep
+		for _, readyStep := range findReadySteps(instructions) {
+			markAsDone(readyStep, instructions)
+			instructionSet += readyStep
+		}
 	}
 
 	return instructionSet
