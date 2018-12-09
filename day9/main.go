@@ -12,6 +12,20 @@ const (
 	malformedInputError = "malformed input"
 )
 
+type node struct {
+	value int
+	next  *node
+	prev  *node
+}
+
+func newCircularLinkedList() *node {
+	n := new(node)
+	n.next = n
+	n.prev = n
+
+	return n
+}
+
 func parseInput(input string) (numPlayers, numMarbles int, err error) {
 	numMatched, err := fmt.Sscanf(input, lineFormat, &numPlayers, &numMarbles)
 	if err != nil {
@@ -33,27 +47,45 @@ func getMax(arr []int) (max int) {
 	return
 }
 
+func getElementByOffset(n *node, offset int) *node {
+	cursor := n
+	negative := false
+	numJumps := offset
+	if offset < 0 {
+		numJumps *= -1
+		negative = true
+	}
+
+	for i := 0; i < numJumps; i++ {
+		if negative {
+			cursor = cursor.prev
+		} else {
+			cursor = cursor.next
+		}
+	}
+
+	return cursor
+}
+
 func runGame(numPlayers int, numMarbles int) int {
 	scores := make([]int, numPlayers)
-	board := make([]int, 1, numMarbles)
-	currentMarbleIndex := 0
+	currentMarble := newCircularLinkedList()
 	currentPlayer := 0
 	for nextMarble := 1; nextMarble <= numMarbles; nextMarble++ {
 		if nextMarble%23 == 0 {
-			removeIndex := (currentMarbleIndex - 7 + len(board)) % len(board)
-			scores[currentPlayer] += board[removeIndex] + nextMarble
-			board = append(board[:removeIndex], board[removeIndex+1:]...)
-			currentMarbleIndex = removeIndex % len(board)
+			removeMarble := getElementByOffset(currentMarble, -7)
+			removeMarble.prev.next = removeMarble.next
+			scores[currentPlayer] += nextMarble + removeMarble.value
+			currentMarble = removeMarble.next
 		} else {
-			insertIndex := (currentMarbleIndex + 2) % len(board)
-			if len(board) == 1 {
-				insertIndex = 1
-			} else if currentMarbleIndex+2 == len(board) {
-				insertIndex = len(board)
+			newMarble := &node{
+				value: nextMarble,
+				next:  currentMarble.next.next,
+				prev:  currentMarble.next,
 			}
-			tailElements := append([]int{nextMarble}, board[insertIndex:]...)
-			board = append(board[:insertIndex], tailElements...)
-			currentMarbleIndex = insertIndex
+			newMarble.next.prev = newMarble
+			currentMarble.next.next = newMarble
+			currentMarble = newMarble
 		}
 		currentPlayer = (currentPlayer + 1) % numPlayers
 	}
@@ -79,4 +111,5 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(runGame(numPlayers, numMarbles))
+	fmt.Println(runGame(numPlayers, numMarbles*100))
 }
