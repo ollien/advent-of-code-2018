@@ -8,7 +8,6 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"time"
 )
 
 const (
@@ -134,20 +133,20 @@ func printBoard(points map[point][]velocity) {
 	}
 }
 
-func atLeastNInARow(points map[point][]velocity, n int) bool {
-	rows := make(map[int][]int)
+func atLeastNInACol(points map[point][]velocity, n int) bool {
+	cols := make(map[int][]int)
 	for storedPoint := range points {
-		if _, ok := rows[storedPoint.row]; ok {
-			rows[storedPoint.row] = append(rows[storedPoint.row], storedPoint.col)
+		if _, ok := cols[storedPoint.col]; ok {
+			cols[storedPoint.col] = append(cols[storedPoint.col], storedPoint.row)
 		} else {
-			rows[storedPoint.row] = []int{storedPoint.col}
+			cols[storedPoint.col] = []int{storedPoint.row}
 		}
 	}
-	for row := range rows {
-		sort.Ints(rows[row])
+	for col := range cols {
+		sort.Ints(cols[col])
 		continuousCount := 1
-		for i := range rows[row] {
-			if i != 0 && rows[row][i-1] == rows[row][i]-1 {
+		for i := range cols[col] {
+			if i != 0 && cols[col][i-1] == cols[col][i]-1 {
 				continuousCount++
 			} else {
 				continuousCount = 0
@@ -179,15 +178,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Press ^C when you see the message!")
 	hourCount := 0
-	for {
+	// All letters are 10 chars high.
+	for !atLeastNInACol(points, 10) {
 		hourCount++
 		points = movePoints(points)
-		if atLeastNInARow(points, 5) {
-			fmt.Printf("Hour %d\n", hourCount)
-			printBoard(points)
-			time.Sleep(time.Second)
-		}
 	}
+	fmt.Printf("Hour %d\n", hourCount)
+	printBoard(points)
 }
