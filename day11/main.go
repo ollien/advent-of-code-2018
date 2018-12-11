@@ -37,6 +37,25 @@ func part1(serialNumber int) (bestRow int, bestCol int) {
 	return
 }
 
+func part2(serialNumber int) (bestRow int, bestCol int, bestSize int) {
+	maxScore := 0
+	for squareSize := 1; squareSize <= gridSize; squareSize++ {
+		for i := 1; i <= gridSize; i++ {
+			for j := 1; j <= gridSize; j++ {
+				score := getSquareScore(i, j, squareSize, serialNumber)
+				if score > maxScore {
+					maxScore = score
+					bestRow = i
+					bestCol = j
+					bestSize = squareSize
+				}
+			}
+		}
+	}
+
+	return
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main serial_number")
@@ -51,4 +70,6 @@ func main() {
 
 	bestRow, bestCol := part1(serialNumber)
 	fmt.Printf("%d,%d\n", bestCol, bestRow)
+	bestRow, bestCol, bestSize := part2(serialNumber)
+	fmt.Printf("%d,%d,%d\n", bestCol, bestRow, bestSize)
 }
