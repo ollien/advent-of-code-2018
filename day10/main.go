@@ -12,6 +12,7 @@ import (
 const (
 	inputFormat         = "position=<%d, %d> velocity=<%d, %d>"
 	malformedInputError = "malformed input"
+	letterThreshold     = 10 // should be 8 for the sample input
 )
 
 type point struct {
@@ -157,8 +158,8 @@ func main() {
 		panic(err)
 	}
 	hourCount := 0
-	// All letters are 8 chars high
-	for !shouldPrint(points, 10) {
+	// Don't print until the threshold is met
+	for !shouldPrint(points, letterThreshold) {
 		hourCount++
 		points = movePoints(points)
 	}
