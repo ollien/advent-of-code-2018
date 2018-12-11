@@ -8,9 +8,9 @@ import (
 
 const gridSize = 300
 
-func getSquareScore(startRow int, startCol int, serialNumber int) (score int) {
-	for i := startRow; i < startRow+3; i++ {
-		for j := startCol; j < startCol+3; j++ {
+func getSquareScore(startRow int, startCol int, size int, serialNumber int) (score int) {
+	for i := startRow; i < startRow+size; i++ {
+		for j := startCol; j < startCol+size; j++ {
 			rackID := j + 10
 			powerLevel := rackID * (rackID*i + serialNumber)
 			powerLevel = powerLevel / 100 % 10
@@ -25,7 +25,7 @@ func part1(serialNumber int) (bestRow int, bestCol int) {
 	maxScore := 0
 	for i := 1; i <= gridSize; i++ {
 		for j := 1; j <= gridSize; j++ {
-			score := getSquareScore(i, j, serialNumber)
+			score := getSquareScore(i, j, 3, serialNumber)
 			if score > maxScore {
 				maxScore = score
 				bestRow = i
