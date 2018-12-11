@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
-	"sort"
 	"strings"
 )
 
@@ -133,31 +132,10 @@ func printBoard(points map[point][]velocity) {
 	}
 }
 
-func atLeastNInACol(points map[point][]velocity, n int) bool {
-	cols := make(map[int][]int)
-	for storedPoint := range points {
-		if _, ok := cols[storedPoint.col]; ok {
-			cols[storedPoint.col] = append(cols[storedPoint.col], storedPoint.row)
-		} else {
-			cols[storedPoint.col] = []int{storedPoint.row}
-		}
-	}
-	for col := range cols {
-		sort.Ints(cols[col])
-		continuousCount := 1
-		for i := range cols[col] {
-			if i != 0 && cols[col][i-1] == cols[col][i]-1 {
-				continuousCount++
-			} else {
-				continuousCount = 0
-			}
-			if continuousCount == n-1 {
-				return true
-			}
-		}
-	}
+func shouldPrint(points map[point][]velocity, rowThreshold int) bool {
+	minRow, _, maxRow, _ := findMinPos(points)
 
-	return false
+	return maxRow-minRow < rowThreshold
 }
 
 func main() {
@@ -179,8 +157,8 @@ func main() {
 		panic(err)
 	}
 	hourCount := 0
-	// All letters are 10 chars high. The smallest one I found is just missing two chars
-	for !atLeastNInACol(points, 8) {
+	// All letters are 8 chars high
+	for !shouldPrint(points, 10) {
 		hourCount++
 		points = movePoints(points)
 	}
