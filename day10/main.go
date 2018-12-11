@@ -179,8 +179,8 @@ func main() {
 		panic(err)
 	}
 	hourCount := 0
-	// All letters are 10 chars high.
-	for !atLeastNInACol(points, 10) {
+	// All letters are 10 chars high. The smallest one I found is just missing two chars
+	for !atLeastNInACol(points, 8) {
 		hourCount++
 		points = movePoints(points)
 	}
