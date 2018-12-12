@@ -14,7 +14,8 @@ const (
 	stateDelim          = " => "
 	liveChar            = '#'
 	deadChar            = '.'
-	numSteps            = 20
+	part1Steps          = 20
+	part2Steps          = 50000000000
 )
 
 func parseInput(inputLines []string) (string, map[string]bool, error) {
@@ -67,7 +68,7 @@ func runStep(state string, states map[string]bool) (string, int) {
 func part1(initialState string, states map[string]bool) int {
 	currentState := initialState
 	leftPotPos := 0
-	for i := 0; i < numSteps; i++ {
+	for i := 0; i < part1Steps; i++ {
 		var leftPots int
 		currentState, leftPots = runStep(currentState, states)
 		leftPotPos += leftPots
@@ -81,6 +82,38 @@ func part1(initialState string, states map[string]bool) int {
 	}
 
 	return total
+}
+
+func part2(initialState string, states map[string]bool) int {
+	currentState := initialState
+	leftPotPos := 0
+	lastScores := make([]int, 3)
+	difference := 0
+	numStepsBeforeRepeat := 0
+	// Find the constant difference between steps
+	for i := 0; i < part2Steps; i++ {
+		var leftPots int
+		currentState, leftPots = runStep(currentState, states)
+		leftPotPos += leftPots
+		total := 0
+		for i, char := range currentState {
+			if char == liveChar {
+				total += i - leftPotPos
+			}
+		}
+		currentDifference := total - lastScores[0]
+		if i > 3 && currentDifference == lastScores[0]-lastScores[1] {
+			difference = currentDifference
+			numStepsBeforeRepeat = i - 1
+			break
+		}
+		lastScores[2] = lastScores[1]
+		lastScores[1] = lastScores[0]
+		lastScores[0] = total
+	}
+
+	// Add the score before the constant difference to the number of steps that have a constant difference, times said difference
+	return lastScores[1] + (part2Steps-numStepsBeforeRepeat)*difference
 }
 
 func main() {
@@ -103,4 +136,5 @@ func main() {
 	}
 	fmt.Println(initialState)
 	fmt.Println(part1(initialState, states))
+	fmt.Println(part2(initialState, states))
 }
