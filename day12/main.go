@@ -65,51 +65,54 @@ func runStep(state string, states map[string]bool) (string, int) {
 	return trimmedFinalState, 4 - firstPotPos
 }
 
-func part1(initialState string, states map[string]bool) int {
-	currentState := initialState
-	leftPotPos := 0
-	for i := 0; i < part1Steps; i++ {
-		var leftPots int
-		currentState, leftPots = runStep(currentState, states)
-		leftPotPos += leftPots
-	}
-
-	total := 0
+// getStateScore gets the score of the current state given current state and the index of the starting pot
+func getStateScore(currentState string, startingPotPos int) (score int) {
 	for i, char := range currentState {
 		if char == liveChar {
-			total += i - leftPotPos
+			score += i - startingPotPos
 		}
 	}
 
-	return total
+	return
+}
+
+func part1(initialState string, states map[string]bool) int {
+	currentState := initialState
+	startingPotPos := 0
+	for i := 0; i < part1Steps; i++ {
+		// prevent shadowing of currentState
+		var leftPots int
+		currentState, leftPots = runStep(currentState, states)
+		startingPotPos += leftPots
+	}
+
+	return getStateScore(currentState, startingPotPos)
 }
 
 func part2(initialState string, states map[string]bool) int {
 	currentState := initialState
-	leftPotPos := 0
+	startingPotIndex := 0
 	lastScores := make([]int, 3)
 	difference := 0
 	numStepsBeforeRepeat := 0
 	// Find the constant difference between steps
 	for i := 0; i < part2Steps; i++ {
+		// prevent shadowing of currentState
 		var leftPots int
 		currentState, leftPots = runStep(currentState, states)
-		leftPotPos += leftPots
-		total := 0
-		for i, char := range currentState {
-			if char == liveChar {
-				total += i - leftPotPos
-			}
-		}
-		currentDifference := total - lastScores[0]
-		if i > 3 && currentDifference == lastScores[0]-lastScores[1] {
+		startingPotIndex += leftPots
+		score := getStateScore(currentState, startingPotIndex)
+
+		currentDifference := score - lastScores[0]
+		// Check if we have a constant difference
+		if i >= 3 && currentDifference == lastScores[0]-lastScores[1] {
 			difference = currentDifference
 			numStepsBeforeRepeat = i - 1
 			break
 		}
 		lastScores[2] = lastScores[1]
 		lastScores[1] = lastScores[0]
-		lastScores[0] = total
+		lastScores[0] = score
 	}
 
 	// Add the score before the constant difference to the number of steps that have a constant difference, times said difference
