@@ -57,6 +57,17 @@ type track struct {
 	neighbors []*track
 }
 
+func makeCart(row int, col int, direction cartDirection, currentTrack *track) cart {
+	return cart{
+		row:               row,
+		col:               col,
+		direction:         direction,
+		currentTrack:      currentTrack,
+		willTurn:          true,
+		nextTurnDirection: leftDirection,
+	}
+}
+
 func makeTrack(row int, col int, direction trackDirection) *track {
 	return &track{
 		row:       row,
@@ -142,6 +153,7 @@ func (set cartSet) Less(i int, j int) bool {
 	if set[i].row == set[j].row {
 		return set[i].col < set[j].col
 	}
+
 	return set[i].row < set[j].row
 }
 
@@ -219,14 +231,7 @@ func parseTracks(rawTracks []string) cartSet {
 			previousRowTracks[col] = newTrack
 
 			if haveCart {
-				newCart := cart{
-					row:               row,
-					col:               col,
-					direction:         cartTravelDrection,
-					currentTrack:      newTrack,
-					willTurn:          true,
-					nextTurnDirection: leftDirection,
-				}
+				newCart := makeCart(row, col, cartTravelDrection, newTrack)
 				carts = append(carts, newCart)
 			}
 		}
@@ -321,9 +326,8 @@ func part2(carts cartSet) (int, int) {
 		collidedCarts = collidedCarts[:0]
 		carts = newCartSet
 	}
-	finalCart := carts[0]
 
-	return finalCart.row, finalCart.col
+	return carts[0].row, carts[0].col
 }
 
 func main() {
@@ -345,6 +349,7 @@ func main() {
 	collidedRow, collidedCol := part1(carts)
 	fmt.Printf("%d,%d\n", collidedCol, collidedRow)
 
+	// Rebuild the tracks - the carts have moved since we started and some edge cases may have more than one cart colliding at a time
 	carts = parseTracks(rawTracks)
 	finalRow, finalCol := part2(carts)
 	fmt.Printf("%d,%d\n", finalCol, finalRow)
