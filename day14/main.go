@@ -88,8 +88,7 @@ func part2(scoreString string) int {
 	solutionSlice := makeSolutionSlice(scoreString)
 	for itemIndex == -1 {
 		newScores := calculateNewScores(scores, elf1Cursor, elf2Cursor)
-		elf1Score := scores[elf1Cursor]
-		elf2Score := scores[elf2Cursor]
+		// We must loop through each new score in order to make sure that we handle the cases of double digits
 		for _, newScore := range newScores {
 			scores = append(scores, newScore)
 			if len(scores) >= len(solutionSlice) {
@@ -100,6 +99,8 @@ func part2(scoreString string) int {
 				}
 			}
 		}
+		elf1Score := scores[elf1Cursor]
+		elf2Score := scores[elf2Cursor]
 		elf1Cursor = (elf1Cursor + elf1Score + 1) % len(scores)
 		elf2Cursor = (elf2Cursor + elf2Score + 1) % len(scores)
 	}
@@ -119,6 +120,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	// Kind of ugly but it works for the simple argparsing of this...
 	if partNum == "1" || partNum == "1,2" {
 		fmt.Println(part1(numScores))
 	}
