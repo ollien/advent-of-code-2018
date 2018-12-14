@@ -91,12 +91,14 @@ func part2(scoreString string) int {
 		// We must loop through each new score in order to make sure that we handle the cases of double digits
 		for _, newScore := range newScores {
 			scores = append(scores, newScore)
-			if len(scores) >= len(solutionSlice) {
-				// If the last len(solutionSlice) digits are the same sa our solution slice, we're done
-				if compareIntSlices(scores[len(scores)-len(solutionSlice):], solutionSlice) {
-					itemIndex = len(scores) - len(solutionSlice)
-					break
-				}
+			if len(scores) < len(solutionSlice) {
+				continue
+			}
+
+			// If the last len(solutionSlice) digits are the same sa our solution slice, we're done
+			if compareIntSlices(scores[len(scores)-len(solutionSlice):], solutionSlice) {
+				itemIndex = len(scores) - len(solutionSlice)
+				break
 			}
 		}
 		elf1Score := scores[elf1Cursor]
