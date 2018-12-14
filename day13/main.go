@@ -139,6 +139,9 @@ func (set cartSet) Len() int {
 }
 
 func (set cartSet) Less(i int, j int) bool {
+	if set[i].row == set[j].row {
+		return set[i].col < set[j].col
+	}
 	return set[i].row < set[j].row
 }
 
