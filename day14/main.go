@@ -20,7 +20,7 @@ func calculateNewScores(scores []int, elf1Cursor int, elf2Cursor int) []int {
 	} else {
 		for total != 0 {
 			newScores = append([]int{total % 10}, newScores...)
-			total = total / 10
+			total /= 10
 		}
 	}
 
