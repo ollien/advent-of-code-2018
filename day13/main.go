@@ -253,24 +253,40 @@ func getCollidedPair(carts cartSet) (int, int) {
 	return -1, -1
 }
 
+// Run a single tick of the simulation - callback will give the indices of the collided carts. It should return whether or not the tick should continue after the collision
+func runTick(carts cartSet, collisionCallback func(int, int) bool) {
+	for i := range carts {
+		// skip zero valued carts - indicates they've been collided
+		if carts[i] == (cart{}) {
+			continue
+		}
+
+		if carts[i].currentTrack.direction == intersectionDirection {
+			carts[i].turnAtIntersection()
+		}
+		carts[i].move()
+		carts[i].turnAtCurve()
+		collidedCart1, collidedCart2 := getCollidedPair(carts)
+		if collidedCart1 != -1 && collidedCart2 != -1 {
+			shouldBreak := collisionCallback(collidedCart1, collidedCart2)
+			if shouldBreak {
+				break
+			}
+		}
+	}
+}
+
 func part1(carts cartSet) (int, int) {
 	cartsAreCollided := false
 	var collidedRow, collidedCol int
 	for !cartsAreCollided {
 		sort.Sort(carts)
-		for i := range carts {
-			if carts[i].currentTrack.direction == intersectionDirection {
-				carts[i].turnAtIntersection()
-			}
-			carts[i].move()
-			carts[i].turnAtCurve()
-			collidedCart1, collidedCart2 := getCollidedPair(carts)
-			if collidedCart1 != -1 && collidedCart2 != -1 {
-				cartsAreCollided = true
-				collidedRow, collidedCol = carts[collidedCart1].row, carts[collidedCart2].col
-				break
-			}
-		}
+		// Run a single tick of the simulation
+		runTick(carts, func(collidedCart1 int, collidedCart2 int) bool {
+			cartsAreCollided = true
+			collidedRow, collidedCol = carts[collidedCart1].row, carts[collidedCart2].col
+			return true
+		})
 	}
 
 	return collidedRow, collidedCol
@@ -280,24 +296,16 @@ func part2(carts cartSet) (int, int) {
 	for len(carts) > 1 {
 		collidedCarts := make([]int, 0, len(carts))
 		sort.Sort(carts)
-		for i := range carts {
-			if carts[i] == (cart{}) {
-				continue
-			}
+		// Run a single tick of the simulation
+		runTick(carts, func(collidedCart1 int, collidedCart2 int) bool {
+			collidedCarts = append(collidedCarts, collidedCart1, collidedCart2)
+			carts[collidedCart1] = cart{}
+			carts[collidedCart2] = cart{}
+			return false
+		})
 
-			if carts[i].currentTrack.direction == intersectionDirection {
-				carts[i].turnAtIntersection()
-			}
-			carts[i].move()
-			carts[i].turnAtCurve()
-			collidedCart1, collidedCart2 := getCollidedPair(carts)
-			if collidedCart1 != -1 && collidedCart2 != -1 {
-				collidedCarts = append(collidedCarts, collidedCart1, collidedCart2)
-				carts[collidedCart1] = cart{}
-				carts[collidedCart2] = cart{}
-			}
-		}
 		newCartSet := make(cartSet, 0, len(carts)-len(collidedCarts))
+		// Check if this cart has been collided, and added it to the new cart set if not
 		for i := range carts {
 			inCollidedSet := false
 			for _, collidedIndex := range collidedCarts {
