@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strconv"
@@ -23,7 +24,35 @@ func calculateNewScores(scores []int, elf1Cursor int, elf2Cursor int) []int {
 		}
 	}
 
-	return append(scores, newScores...)
+	return newScores
+}
+
+func makeStringOfIntSlice(slice []int) string {
+	buffer := bytes.NewBufferString("")
+	for _, item := range slice {
+		buffer.WriteString(strconv.Itoa(item))
+	}
+
+	return buffer.String()
+}
+
+func makeSolutionSlice(solutionString string) []int {
+	solution := make([]int, len(solutionString))
+	for i, char := range solutionString {
+		solution[i] = int(char - '0')
+	}
+
+	return solution
+}
+
+func compareIntSlices(a []int, b []int) bool {
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 func part1(numScores int) string {
@@ -33,7 +62,7 @@ func part1(numScores int) string {
 	elf1Cursor := 0
 	elf2Cursor := 1
 	for len(scores) < numScores+10 {
-		scores = calculateNewScores(scores, elf1Cursor, elf2Cursor)
+		scores = append(scores, calculateNewScores(scores, elf1Cursor, elf2Cursor)...)
 		elf1Score := scores[elf1Cursor]
 		elf2Score := scores[elf2Cursor]
 		elf1Cursor = (elf1Cursor + elf1Score + 1) % len(scores)
@@ -45,7 +74,36 @@ func part1(numScores int) string {
 		resultString += strconv.Itoa(scores[i])
 	}
 
-	return resultString
+	return makeStringOfIntSlice(scores[numScores : numScores+10])
+}
+
+func part2(scoreString string) int {
+	scores := make([]int, 2)
+	scores[0] = score1
+	scores[1] = score2
+	elf1Cursor := 0
+	elf2Cursor := 1
+	itemIndex := -1
+	solutionSlice := makeSolutionSlice(scoreString)
+	for itemIndex == -1 {
+		newScores := calculateNewScores(scores, elf1Cursor, elf2Cursor)
+		elf1Score := scores[elf1Cursor]
+		elf2Score := scores[elf2Cursor]
+		for _, newScore := range newScores {
+			scores = append(scores, newScore)
+			if len(scores) >= len(solutionSlice) {
+				// If the last len(solutionSlice) digits are the same sa our solution slice, we're done
+				if compareIntSlices(scores[len(scores)-len(solutionSlice):], solutionSlice) {
+					itemIndex = len(scores) - len(solutionSlice)
+					break
+				}
+			}
+		}
+		elf1Cursor = (elf1Cursor + elf1Score + 1) % len(scores)
+		elf2Cursor = (elf2Cursor + elf2Score + 1) % len(scores)
+	}
+
+	return itemIndex
 }
 
 func main() {
@@ -60,4 +118,5 @@ func main() {
 		panic(err)
 	}
 	fmt.Println(part1(numScores))
+	fmt.Println(part2(rawNumScores))
 }
