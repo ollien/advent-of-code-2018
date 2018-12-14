@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	score1 = 3
-	score2 = 7
+	usageString = "Usage: ./main number_of_scores partNum[,partNum]"
+	score1      = 3
+	score2      = 7
 )
 
 func calculateNewScores(scores []int, elf1Cursor int, elf2Cursor int) []int {
@@ -107,16 +108,23 @@ func part2(scoreString string) int {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: ./main number_of_scores")
+	if len(os.Args) != 3 {
+		fmt.Println(usageString)
 		return
 	}
 
 	rawNumScores := os.Args[1]
+	partNum := os.Args[2]
 	numScores, err := strconv.Atoi(rawNumScores)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(part1(numScores))
-	fmt.Println(part2(rawNumScores))
+	if partNum == "1" || partNum == "1,2" {
+		fmt.Println(part1(numScores))
+	}
+	if partNum == "2" || partNum == "1,2" {
+		fmt.Println(part2(rawNumScores))
+	} else if partNum != "1" {
+		fmt.Println(usageString)
+	}
 }
