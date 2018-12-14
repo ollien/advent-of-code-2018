@@ -239,6 +239,11 @@ func parseTracks(rawTracks []string) cartSet {
 func getCollidedPair(carts cartSet) (int, int) {
 	for i := range carts {
 		for j := range carts {
+			// Skip any pair that has already been removed for a collision
+			if carts[i] == (cart{}) || carts[j] == (cart{}) {
+				continue
+			}
+
 			if j != i && carts[i].row == carts[j].row && carts[i].col == carts[j].col {
 				return i, j
 			}
@@ -271,6 +276,48 @@ func part1(carts cartSet) (int, int) {
 	return collidedRow, collidedCol
 }
 
+func part2(carts cartSet) (int, int) {
+	for len(carts) > 1 {
+		collidedCarts := make([]int, 0, len(carts))
+		sort.Sort(carts)
+		for i := range carts {
+			if carts[i] == (cart{}) {
+				continue
+			}
+
+			if carts[i].currentTrack.direction == intersectionDirection {
+				carts[i].turnAtIntersection()
+			}
+			carts[i].move()
+			carts[i].turnAtCurve()
+			collidedCart1, collidedCart2 := getCollidedPair(carts)
+			if collidedCart1 != -1 && collidedCart2 != -1 {
+				collidedCarts = append(collidedCarts, collidedCart1, collidedCart2)
+				carts[collidedCart1] = cart{}
+				carts[collidedCart2] = cart{}
+			}
+		}
+		newCartSet := make(cartSet, 0, len(carts)-len(collidedCarts))
+		for i := range carts {
+			inCollidedSet := false
+			for _, collidedIndex := range collidedCarts {
+				if i == collidedIndex {
+					inCollidedSet = true
+					break
+				}
+			}
+			if !inCollidedSet {
+				newCartSet = append(newCartSet, carts[i])
+			}
+		}
+		collidedCarts = collidedCarts[:0]
+		carts = newCartSet
+	}
+	finalCart := carts[0]
+
+	return finalCart.row, finalCart.col
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -289,4 +336,8 @@ func main() {
 	carts := parseTracks(rawTracks)
 	collidedRow, collidedCol := part1(carts)
 	fmt.Printf("%d,%d\n", collidedCol, collidedRow)
+
+	carts = parseTracks(rawTracks)
+	finalRow, finalCol := part2(carts)
+	fmt.Printf("%d,%d\n", finalCol, finalRow)
 }
