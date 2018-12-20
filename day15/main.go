@@ -111,6 +111,7 @@ func (e *entity) canTravelThrough() bool {
 	return false
 }
 
+// move performs a breadth first search to move the elf to the next position along the appropriate shortest path
 func (e *entity) move(containingBoard board) {
 	toVisit := nodeQueue{e}
 	targetCandidates := nodeList{}
@@ -377,13 +378,13 @@ func runSimulation(b board, entities nodeList) (winner, int) {
 		sort.Sort(entities)
 		finishedRoundEarly := false
 		for _, e := range entities {
-			entity := e.(*entity)
-			if entity.health <= 0 {
+			entityNode := e.(*entity)
+			if entityNode.health <= 0 {
 				continue
 			}
-			if !entity.attack(b) {
-				entity.move(b)
-				entity.attack(b)
+			if !entityNode.attack(b) {
+				entityNode.move(b)
+				entityNode.attack(b)
 				roundWinner = b.getWinner()
 				if roundWinner != noWinner {
 					finishedRoundEarly = true
@@ -397,13 +398,24 @@ func runSimulation(b board, entities nodeList) (winner, int) {
 	}
 	healthTotal := 0
 	for _, e := range entities {
-		entity := e.(*entity)
-		if entity.health > 0 {
-			healthTotal += entity.health
+		entityNode := e.(*entity)
+		if entityNode.health > 0 {
+			healthTotal += entityNode.health
 		}
 	}
 
 	return roundWinner, roundCount * healthTotal
+}
+
+func didElfDie(entities nodeList) bool {
+	for _, rawEntity := range entities {
+		entityNode := rawEntity.(*entity)
+		if entityNode.health <= 0 && !entityNode.isGoblin {
+			return true
+		}
+	}
+
+	return false
 }
 
 func part1(b board, entities nodeList) (outcome int) {
@@ -430,15 +442,7 @@ func part2(b board) int {
 			continue
 		}
 
-		elfDied := false
-		for _, rawEntity := range roundEntities {
-			entityNode := rawEntity.(*entity)
-			if entityNode.health <= 0 && !entityNode.isGoblin {
-				elfDied = true
-				break
-			}
-		}
-		allElvesAlive = !elfDied
+		allElvesAlive = !didElfDie(roundEntities)
 	}
 
 	return lastOutcome
