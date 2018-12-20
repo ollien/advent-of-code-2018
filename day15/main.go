@@ -117,7 +117,6 @@ func (e *entity) move(containingBoard board) {
 	distanceTable := make(map[node]int)
 	distance := 0
 	searchUntilDistance := -1
-	searchedTiles := nodeList{}
 	distanceTable[e] = 0
 	for len(toVisit) > 0 && distance != searchUntilDistance {
 		visitingNode := toVisit.dequeue()
@@ -125,7 +124,6 @@ func (e *entity) move(containingBoard board) {
 		distance = distanceTable[visitingNode] + 1
 		for _, neighbor := range neighbors {
 			if _, wasVisited := distanceTable[neighbor]; !wasVisited {
-				searchedTiles = append(searchedTiles, visitingNode)
 				if entityNode, isEntity := neighbor.(*entity); isEntity && entityNode.isGoblin != e.isGoblin {
 					toVisit.enqueue(neighbor)
 					distanceTable[neighbor] = distance
