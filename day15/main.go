@@ -325,6 +325,7 @@ func (b board) clone() (board, nodeList) {
 	for row, boardRow := range b {
 		newBoard[row] = make([]node, len(boardRow))
 		for col, boardNode := range boardRow {
+			// Some tiles may have moved around since their original usage, so we must reset their positions
 			boardNode.setPos(coordinate{row, col})
 			// Entities must be deep copied as they can change state
 			if entityNode, isEntity := boardNode.(*entity); isEntity {
