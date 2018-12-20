@@ -416,7 +416,7 @@ func part2(b board) int {
 	lowestAttackPower := elfAttackPower
 	highestAttackPower := math.MaxInt32
 	lastOutcome := -1
-	for lowestAttackPower <= highestAttackPower {
+	for lowestAttackPower != highestAttackPower {
 		roundBoard, roundEntities := b.clone()
 		for i := range roundEntities {
 			if entityNode, isEntity := roundEntities[i].(*entity); isEntity && !entityNode.isGoblin {
