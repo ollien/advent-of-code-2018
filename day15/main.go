@@ -446,6 +446,7 @@ func part2(b board) int {
 
 func main() {
 	if len(os.Args) != 2 {
+		fmt.Println("Usage: ./main input_file")
 		return
 	}
 
