@@ -412,11 +412,11 @@ func part1(b board, entities nodeList) (outcome int) {
 }
 
 func part2(b board) int {
-	allElvesAlive := false
-	elfAttackPower := baseAttackPower
+	elfAttackPower := baseAttackPower + 1
+	lowestAttackPower := elfAttackPower
+	highestAttackPower := math.MaxInt32
 	lastOutcome := -1
-	for !allElvesAlive {
-		elfAttackPower++
+	for lowestAttackPower <= highestAttackPower {
 		roundBoard, roundEntities := b.clone()
 		for i := range roundEntities {
 			if entityNode, isEntity := roundEntities[i].(*entity); isEntity && !entityNode.isGoblin {
@@ -424,11 +424,7 @@ func part2(b board) int {
 			}
 		}
 
-		var lastWinner winner
-		lastWinner, lastOutcome = runSimulation(roundBoard, roundEntities)
-		if lastWinner != elfWinner {
-			continue
-		}
+		_, lastOutcome = runSimulation(roundBoard, roundEntities)
 
 		elfDied := false
 		for _, rawEntity := range roundEntities {
@@ -438,10 +434,19 @@ func part2(b board) int {
 				break
 			}
 		}
-		allElvesAlive = !elfDied
+
+		if elfDied {
+			lowestAttackPower = elfAttackPower + 1
+		} else if !elfDied {
+			highestAttackPower = elfAttackPower - 1
+		}
+		if highestAttackPower == math.MaxInt32 {
+			elfAttackPower *= 2
+		} else {
+			elfAttackPower = (lowestAttackPower + highestAttackPower) / 2
+		}
 	}
 
-	fmt.Println(elfAttackPower)
 	return lastOutcome
 }
 
