@@ -12,7 +12,7 @@ import (
 
 const (
 	startingHealth      = 200
-	attackPower         = 3
+	baseAttackPower     = 3
 	noTargetFoundError  = "no target found"
 	malformedInputError = "malformed input"
 	targetChar          = 'x'
@@ -52,9 +52,10 @@ type tile struct {
 }
 
 type entity struct {
-	position coordinate
-	health   int
-	isGoblin bool
+	position    coordinate
+	attackPower int
+	health      int
+	isGoblin    bool
 }
 
 func (q *nodeQueue) enqueue(newNode node) {
@@ -120,11 +121,11 @@ func (e *entity) move(containingBoard board) {
 	distanceTable[e] = 0
 	for len(toVisit) > 0 && distance != searchUntilDistance {
 		visitingNode := toVisit.dequeue()
-		searchedTiles = append(searchedTiles, visitingNode)
 		neighbors := containingBoard.getNeighbors(visitingNode.getPos())
 		distance = distanceTable[visitingNode] + 1
 		for _, neighbor := range neighbors {
 			if _, wasVisited := distanceTable[neighbor]; !wasVisited {
+				searchedTiles = append(searchedTiles, visitingNode)
 				if entityNode, isEntity := neighbor.(*entity); isEntity && entityNode.isGoblin != e.isGoblin {
 					toVisit.enqueue(neighbor)
 					distanceTable[neighbor] = distance
@@ -169,7 +170,7 @@ func (e *entity) attack(containingBoard board) bool {
 		return false
 	}
 
-	lowestHealthTarget.health -= attackPower
+	lowestHealthTarget.health -= e.attackPower
 	if lowestHealthTarget.health <= 0 {
 		entityPos := lowestHealthTarget.getPos()
 		containingBoard[entityPos.row][entityPos.col] = &tile{
@@ -255,6 +256,7 @@ func (b board) print(targets nodeList) {
 				if pos.row == row && pos.col == col {
 					fmt.Printf("%c", targetChar)
 					printedTarget = true
+					break
 				}
 			}
 			if printedTarget {
@@ -319,6 +321,27 @@ func (b board) getWinner() winner {
 	return currentWinner
 }
 
+func (b board) clone() (board, nodeList) {
+	entities := nodeList{}
+	newBoard := make(board, len(b))
+	for row, boardRow := range b {
+		newBoard[row] = make([]node, len(boardRow))
+		for col, boardNode := range boardRow {
+			boardNode.setPos(coordinate{row, col})
+			// Entities must be deep copied as they can change state
+			if entityNode, isEntity := boardNode.(*entity); isEntity {
+				copiedEntity := *entityNode
+				newBoard[row][col] = &copiedEntity
+				entities = append(entities, newBoard[row][col])
+			} else {
+				newBoard[row][col] = boardNode
+			}
+		}
+	}
+
+	return newBoard, entities
+}
+
 func parseInput(rawBoard []string) (board, nodeList, error) {
 	parsedBoard := make(board, len(rawBoard))
 	entities := nodeList{}
@@ -333,9 +356,10 @@ func parseInput(rawBoard []string) (board, nodeList, error) {
 				}
 			} else if char == elfChar || char == goblinChar {
 				parsedBoard[row][col] = &entity{
-					position: pos,
-					health:   startingHealth,
-					isGoblin: char == goblinChar,
+					position:    pos,
+					attackPower: baseAttackPower,
+					health:      startingHealth,
+					isGoblin:    char == goblinChar,
 				}
 				entities = append(entities, parsedBoard[row][col])
 			} else {
@@ -388,6 +412,40 @@ func part1(b board, entities nodeList) (outcome int) {
 	return
 }
 
+func part2(b board) int {
+	allElvesAlive := false
+	elfAttackPower := baseAttackPower
+	lastOutcome := -1
+	for !allElvesAlive {
+		elfAttackPower++
+		roundBoard, roundEntities := b.clone()
+		for i := range roundEntities {
+			if entityNode, isEntity := roundEntities[i].(*entity); isEntity && !entityNode.isGoblin {
+				entityNode.attackPower = elfAttackPower
+			}
+		}
+
+		var lastWinner winner
+		lastWinner, lastOutcome = runSimulation(roundBoard, roundEntities)
+		if lastWinner != elfWinner {
+			continue
+		}
+
+		elfDied := false
+		for _, rawEntity := range roundEntities {
+			entityNode := rawEntity.(*entity)
+			if entityNode.health <= 0 && !entityNode.isGoblin {
+				elfDied = true
+				break
+			}
+		}
+		allElvesAlive = !elfDied
+	}
+
+	fmt.Println(elfAttackPower)
+	return lastOutcome
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		return
@@ -407,4 +465,9 @@ func main() {
 	}
 
 	fmt.Println(part1(parsedBoard, entities))
+	parsedBoard, _, err = parseInput(rawBoard)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(part2(parsedBoard))
 }
