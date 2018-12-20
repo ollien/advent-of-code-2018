@@ -441,7 +441,6 @@ func part2(b board) int {
 		allElvesAlive = !elfDied
 	}
 
-	fmt.Println(elfAttackPower)
 	return lastOutcome
 }
 
