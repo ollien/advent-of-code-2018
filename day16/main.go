@@ -207,19 +207,18 @@ func parsePart2Input(rawInstructions []string) ([]instruction, error) {
 	return instructions, nil
 }
 
-func addIfNotPresent(src []int, dst []int) []int {
-	resultSlice := make([]int, len(dst))
-	copy(resultSlice, dst)
-	for _, srcItem := range src {
+func intersection(arr1 []int, arr2 []int) []int {
+	resultSlice := []int{}
+	for _, item1 := range arr1 {
 		found := false
-		for _, dstItem := range dst {
-			if dstItem == srcItem {
+		for _, item2 := range arr2 {
+			if item1 == item2 {
 				found = true
 				break
 			}
 		}
-		if !found {
-			resultSlice = append(resultSlice, srcItem)
+		if found {
+			resultSlice = append(resultSlice, item1)
 		}
 	}
 
@@ -288,7 +287,7 @@ func part1(notes []note) (int, map[int][]int) {
 		// If an opcode is already stored, we only need to remove the opcodes that weren't already there
 		if _, haveOpcode := opcodeMappings[opcode]; haveOpcode {
 			opcodeMappings[opcode] = matchingOperations
-			opcodeMappings[opcode] = addIfNotPresent(matchingOperations, opcodeMappings[opcode])
+			opcodeMappings[opcode] = intersection(matchingOperations, opcodeMappings[opcode])
 		} else {
 			opcodeMappings[opcode] = matchingOperations
 		}
