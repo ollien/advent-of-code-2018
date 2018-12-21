@@ -44,7 +44,7 @@ func muli(registers registerSet, register1 int, value int, destinationRegister i
 }
 
 func banr(registers registerSet, register1 int, register2 int, destinationRegister int) registerSet {
-	return bori(registers, register1, registers[register2], destinationRegister)
+	return bani(registers, register1, registers[register2], destinationRegister)
 }
 
 func bani(registers registerSet, register1 int, value int, destinationRegister int) registerSet {
