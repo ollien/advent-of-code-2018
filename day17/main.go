@@ -284,10 +284,10 @@ func findCursorCandidates(streamBoard board) []positionCursor {
 			for col := colRange.low; col <= colRange.high; col++ {
 				streamBoardOccupiedBelow, streamIsStaticBelow := streamBoard.getStatusAt(row+1, col)
 				streamBoardOccupied, streamIsStatic := streamBoard.getStatusAt(row, col)
-				_, streamIsStaticLeft := streamBoard.getStatusAt(row, col+1)
-				_, streamIsStaticRight := streamBoard.getStatusAt(row, col-1)
+				streamBoardOccupiedLeft, streamIsStaticLeft := streamBoard.getStatusAt(row, col+1)
+				streamBoardOccupiedRight, streamIsStaticRight := streamBoard.getStatusAt(row, col-1)
 				// We have a candidate for flow if a stream is occupied, not static, and it is not surrounded by flowing water.
-				if streamBoardOccupied && !streamIsStatic && (!streamBoardOccupiedBelow || streamIsStaticBelow) && !(streamIsStaticLeft && streamIsStaticRight) {
+				if streamBoardOccupied && !streamIsStatic && (!streamBoardOccupiedBelow || streamIsStaticBelow) && !(streamBoardOccupiedLeft && !streamIsStaticLeft && streamBoardOccupiedRight && !streamIsStaticRight) {
 					cursors = append(cursors, positionCursor{row: row, col: col})
 				}
 			}
