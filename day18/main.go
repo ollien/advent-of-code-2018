@@ -91,7 +91,7 @@ func (b board) getAdjacentCounts(row, col int) (trees, lumberyards int) {
 	return
 }
 
-func (b board) tick() {
+func (b board) tick() board {
 	readBoard := b.clone()
 	for row := range b {
 		for col := range b[row] {
@@ -105,6 +105,26 @@ func (b board) tick() {
 			}
 		}
 	}
+
+	return readBoard
+}
+
+func (b board) isIdentical(b2 board) bool {
+	if b == nil && b2 == nil {
+		return true
+	} else if b == nil || b2 == nil {
+		return false
+	}
+
+	for row := range b {
+		for col := range b[row] {
+			if b[row][col] != b2[row][col] {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func parseBoard(rawBoard []string) (board, error) {
@@ -128,6 +148,44 @@ func parseBoard(rawBoard []string) (board, error) {
 	return parsedBoard, nil
 }
 
+func runSimulation(parsedBoard board, numTicks int) int {
+	pastBoards := []board{}
+	cycleLowerBound := -1
+	cycleUpperBound := -1
+	for tick := 0; tick < numTicks; tick++ {
+		lastBoard := parsedBoard.tick()
+		pastBoards = append(pastBoards, lastBoard)
+		// Check all past borads. If we've already encountered this board, we are bound to repeat ourselves. We can calculate the final score from here.
+		for i, pastBoard := range pastBoards {
+			if parsedBoard.isIdentical(pastBoard) {
+				cycleUpperBound = len(pastBoards)
+				cycleLowerBound = i
+				break
+			}
+		}
+		if cycleLowerBound != -1 {
+			break
+		}
+	}
+
+	// If we have a cycle, we need to calculate the score at the end of it
+	if cycleLowerBound == -1 {
+		return parsedBoard.getValue()
+	} else {
+		cycleRange := cycleUpperBound - cycleLowerBound
+		// find the cycle that will put us just over the number of ticks
+		// rearrange cycleLowerBound + cycleRange * n >= numTicks for n, n >= (numTicks - cycleLoewrBound)/cycleRange
+		// Need to take ceiling of division, hence the funky add by ones.
+		numCyclesToOvershoot := ((numTicks-cycleLowerBound-1)/cycleRange + 1)
+		overshootTicks := numCyclesToOvershoot*cycleRange + cycleLowerBound
+		numOver := overshootTicks - numTicks
+		// Work backwards from the top number of cycles based on th enumber we went over
+		boardIndex := ((cycleUpperBound - numOver) + cycleUpperBound) % cycleUpperBound
+
+		return pastBoards[boardIndex].getValue()
+	}
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -146,8 +204,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	for i := 0; i < part1Ticks; i++ {
-		parsedBoard.tick()
+	fmt.Println(runSimulation(parsedBoard, part1Ticks))
+
+	parsedBoard, err = parseBoard(rawBoard)
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println(parsedBoard.getValue())
+	fmt.Println(runSimulation(parsedBoard, part2Ticks))
 }
