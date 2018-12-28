@@ -25,7 +25,6 @@ const (
 )
 
 type overflowCondition int
-type rangeList []positionRange
 
 type positionRange struct {
 	high   int
@@ -34,7 +33,7 @@ type positionRange struct {
 }
 
 type board struct {
-	positions      map[int]rangeList
+	positions      map[int][]positionRange
 	minCol, maxCol int
 	minRow, maxRow int
 }
@@ -44,7 +43,7 @@ type positionCursor struct {
 	col int
 }
 
-func appendToRangeList(ranges rangeList, newRange positionRange) []positionRange {
+func appendToRangeList(ranges []positionRange, newRange positionRange) []positionRange {
 	for i := range ranges {
 		if ranges[i].low <= newRange.low && ranges[i].high >= newRange.high {
 			// If our new set is entirely contained within the existing set, we're done.
@@ -73,7 +72,7 @@ func appendToRangeList(ranges rangeList, newRange positionRange) []positionRange
 // parseInput takes the input for the problem and produces a map of clay rows to ranges of columns (i.e. y values to x value ranges)
 func parseInput(input []string) (board, error) {
 	parsedBoard := board{
-		positions: map[int]rangeList{},
+		positions: map[int][]positionRange{},
 		minCol:    math.MaxInt32,
 		maxCol:    0,
 		minRow:    math.MaxInt32,
@@ -168,14 +167,14 @@ func (b board) findContainingRange(row int, col int) positionRange {
 
 func (b board) clone() board {
 	clonedBoard := board{
-		positions: make(map[int]rangeList, len(b.positions)),
+		positions: make(map[int][]positionRange, len(b.positions)),
 		minCol:    b.minCol,
 		maxCol:    b.maxCol,
 		maxRow:    b.maxRow,
 	}
 
 	for row, positions := range b.positions {
-		clonedBoard.positions[row] = make(rangeList, len(positions))
+		clonedBoard.positions[row] = make([]positionRange, len(positions))
 		copy(clonedBoard.positions[row], positions)
 	}
 
@@ -303,7 +302,7 @@ func flow(clayBoard board) (total int, numStatic int) {
 		minRow:    clayBoard.minRow,
 		minCol:    clayBoard.minCol,
 		maxCol:    clayBoard.maxCol,
-		positions: map[int]rangeList{0: []positionRange{positionRange{low: initialCol, high: initialCol}}},
+		positions: map[int][]positionRange{0: []positionRange{positionRange{low: initialCol, high: initialCol}}},
 	}
 	lastBoard := board{}
 
