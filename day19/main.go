@@ -182,9 +182,15 @@ func runElfcode(registers registerSet, instructionPointerIndex int, instructions
 func solve(registers registerSet, instructionPointerIndex int, instructions []instruction) int {
 	for registers[instructionPointerIndex] < len(instructions) {
 		instructionIndex := registers[instructionPointerIndex]
-		// Once the program begins execution, the number to find the factors of is stored in register 2.
+		// Once the program begins execution, the number we find the factor of will (likely) be the largest one.
 		if instructionIndex == 1 {
-			return findFactorSum(registers[2])
+			maxRegister := 0
+			for _, register := range registers {
+				if register > maxRegister {
+					maxRegister = register
+				}
+			}
+			return findFactorSum(maxRegister)
 		}
 		registers = instructions[instructionIndex](registers)
 		registers[instructionPointerIndex]++
