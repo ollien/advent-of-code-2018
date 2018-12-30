@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -165,6 +165,8 @@ func parseInput(rawInstructions []string) (int, []instruction, error) {
 	return instructionPointerIndex, instructions, nil
 }
 
+// runElfcode naively runs the elfcode program and prints a trace - is not used for solution but was used for debugging.
+// It is left in to help future readers determine how the puzzle was solved
 func runElfcode(registers registerSet, instructionPointerIndex int, instructions []instruction, rawInstructions []string) int {
 	for registers[instructionPointerIndex] < len(instructions) {
 		fmt.Print(registers, " => ")
@@ -177,11 +179,43 @@ func runElfcode(registers registerSet, instructionPointerIndex int, instructions
 	return registers[0]
 }
 
+func solve(registers registerSet, instructionPointerIndex int, instructions []instruction) int {
+	for registers[instructionPointerIndex] < len(instructions) {
+		instructionIndex := registers[instructionPointerIndex]
+		// Once the program begins execution, the number to find the factors of is stored in register 2.
+		if instructionIndex == 1 {
+			return findFactorSum(registers[2])
+		}
+		registers = instructions[instructionIndex](registers)
+		registers[instructionPointerIndex]++
+	}
+
+	return registers[0]
+}
+
+// findFactorSum finds the sum of all the factors of a number
+func findFactorSum(num int) (sum int) {
+	// Find the sqrt of the number. math.Sqrt uses float64, which is imprecise for big numbers.
+	bigTarget := big.NewInt(int64(num))
+	bigSqrt := big.NewInt(0)
+	bigSqrt.Sqrt(bigTarget)
+	// A potentially dangerous conversion, but has been shown empirically to be ok
+	sqrt := int(bigSqrt.Int64())
+	for factorCandidate := 1; factorCandidate <= sqrt; factorCandidate++ {
+		if num%factorCandidate == 0 {
+			sum += factorCandidate
+			if num != sqrt {
+				sum += num / factorCandidate
+			}
+		}
+	}
+
+	return
+}
+
 func main() {
-	// Part 2 is solved by observing that the value in register 0 is simply the sum of the factors of the value that get put into register 2. In part 1 this is 1030, in part 2 this is 10550400
-	if len(os.Args) != 3 {
-		fmt.Println("Usage: ./main in_file register_0_value")
-		fmt.Println("Will print trace of program")
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: ./main in_file")
 		return
 	}
 
@@ -191,18 +225,18 @@ func main() {
 		panic(err)
 	}
 
-	var registers registerSet
-	registers[0], err = strconv.Atoi(os.Args[2])
-	if err != nil {
-		panic(err)
-	}
-
 	rawInstructions := strings.Split(string(inFileContents), "\n")
 	// trim trailing newline
 	rawInstructions = rawInstructions[:len(rawInstructions)-1]
+
 	instructionPointerIndex, instructions, err := parseInput(rawInstructions)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(runElfcode(registers, instructionPointerIndex, instructions, rawInstructions[1:]))
+
+	var registers registerSet
+	fmt.Println(solve(registers, instructionPointerIndex, instructions))
+	// Part 2
+	registers[0] = 1
+	fmt.Println(solve(registers, instructionPointerIndex, instructions))
 }
