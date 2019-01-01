@@ -348,6 +348,16 @@ func part1(distances map[*node]int) int {
 	return maxDistance
 }
 
+func part2(distances map[*node]int) (count int) {
+	for _, distance := range distances {
+		if distance >= 1000 {
+			count++
+		}
+	}
+
+	return
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: ./main in_file")
@@ -372,4 +382,5 @@ func main() {
 
 	distances := getShortestDistances(head, nodes)
 	fmt.Println(part1(distances))
+	fmt.Println(part2(distances))
 }
