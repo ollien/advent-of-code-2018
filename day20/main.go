@@ -225,20 +225,6 @@ func (g grid) flatten() []*node {
 	return nodes
 }
 
-func getClosingBranchIndex(s string) int {
-	skipCount := 0
-	for i, char := range s[1:] {
-		if char == branchStartChar {
-			skipCount++
-		} else if char == branchEndChar && skipCount == 0 {
-			return i + 1
-		} else if char == branchEndChar {
-			skipCount--
-		}
-	}
-	return -1
-}
-
 func getDirectionFromChar(char byte) (direction, error) {
 	switch char {
 	case northChar:
