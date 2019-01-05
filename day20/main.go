@@ -277,7 +277,7 @@ func parseInput(rawRegex string) ([]*pathTree, error) {
 
 	for i := 0; i < len(rawRegex); i++ {
 		char := rawRegex[i]
-		if char == branchStartChar || (recoveringFromOptionalPath && char == branchChar) {
+		if char == branchStartChar {
 			branchEndOffset, err := getClosingBranchIndex(rawRegex[i:])
 			if err != nil {
 				return nil, err
@@ -288,20 +288,25 @@ func parseInput(rawRegex string) ([]*pathTree, error) {
 			}
 			treeCursor.branches = newBranches
 			i += branchEndOffset
-			if !recoveringFromOptionalPath {
+			if rawRegex[i-1] == branchChar {
+				recoveringFromOptionalPath = true
+			} else {
 				paths = append(paths, treeCursor)
 			}
 			prevCursor = treeCursor
 			treeCursor = newPathTree()
-			if rawRegex[i-1] == branchChar {
-				recoveringFromOptionalPath = true
-			}
 		} else if char == branchChar {
+			if recoveringFromOptionalPath {
+				treeCursor = prevCursor
+			}
 			branch := newPathTree()
 			branch.path = make([]direction, len(treeCursor.path))
 			copy(branch.path, treeCursor.path)
-			treeCursor.path = treeCursor.path[:0]
+			branch.branches = treeCursor.branches
+			branch.next = treeCursor.next
 			paths = append(paths, branch)
+			prevCursor = nil
+			treeCursor = newPathTree()
 			recoveringFromOptionalPath = false
 		} else if char == branchEndChar {
 			if len(treeCursor.path) > 0 || rawRegex[i-1] == branchChar {
