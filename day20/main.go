@@ -299,12 +299,7 @@ func parseInput(rawRegex string) ([]*pathTree, error) {
 			if recoveringFromOptionalPath {
 				treeCursor = prevCursor
 			}
-			branch := newPathTree()
-			branch.path = make([]direction, len(treeCursor.path))
-			copy(branch.path, treeCursor.path)
-			branch.branches = treeCursor.branches
-			branch.next = treeCursor.next
-			paths = append(paths, branch)
+			paths = append(paths, treeCursor)
 			prevCursor = nil
 			treeCursor = newPathTree()
 			recoveringFromOptionalPath = false
