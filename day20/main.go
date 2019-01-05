@@ -56,7 +56,8 @@ type cursor struct {
 
 type pathTree struct {
 	path     []direction
-	subpaths []pathTree
+	branches []*pathTree
+	next     *pathTree
 }
 
 func newNode() *node {
@@ -65,18 +66,11 @@ func newNode() *node {
 	}
 }
 
-func newPathTree() pathTree {
-	return pathTree{
+func newPathTree() *pathTree {
+	return &pathTree{
 		path:     []direction{},
-		subpaths: []pathTree{},
+		branches: []*pathTree{},
 	}
-}
-
-func (tree *pathTree) convertPathToSubtree() {
-	subtree := newPathTree()
-	subtree.path = tree.path
-	tree.subpaths = append(tree.subpaths, subtree)
-	tree.path = tree.path[:0]
 }
 
 func (c *cursor) updateCoord(dir direction) {
@@ -274,51 +268,49 @@ func getDirectionFromChar(char byte) (direction, error) {
 	return noDirection, errors.New(malformedInputError)
 }
 
-func parseInput(rawRegex string) (pathTree, error) {
-	tree := newPathTree()
-
+func parseInput(rawRegex string) ([]*pathTree, error) {
+	head := newPathTree()
+	paths := []*pathTree{}
+	treeCursor := head
 	for i := 0; i < len(rawRegex); i++ {
 		char := rawRegex[i]
 		if char == branchStartChar {
-			subtree, err := parseInput(rawRegex[i+1:])
-			fmt.Println(i)
+			branchEndOffset, err := getClosingBranchIndex(rawRegex[i:])
 			if err != nil {
-				return pathTree{}, err
+				return nil, err
 			}
-			// Copy all of the subpaths that we've discovered into our tree
-			for _, path := range subtree.subpaths {
-				tree.subpaths = append(tree.subpaths, path)
-			}
-
-			// Jump our cursor ahead to after the respective closing paren
-			branchCloseIndex, err := getClosingBranchIndex(rawRegex[i:])
+			newBranches, err := parseInput(rawRegex[i+1:])
 			if err != nil {
-				return pathTree{}, err
+				return nil, err
 			}
-			i += branchCloseIndex
+			treeCursor.branches = newBranches
+			treeCursor.next = newPathTree()
+			paths = append(paths, treeCursor)
+			treeCursor = treeCursor.next
+			i += branchEndOffset
 		} else if char == branchChar {
-			subtree, err := parseInput(rawRegex[i+1:])
-			tree.convertPathToSubtree()
-			tree.subpaths = append(tree.subpaths, subtree)
-
-			// Jump our cursor ahead to after the respective closing paren
-			branchCloseIndex, err := getClosingBranchIndex(rawRegex[i:])
-			if err != nil {
-				return pathTree{}, err
-			}
-			i += branchCloseIndex
+			branch := newPathTree()
+			branch.path = make([]direction, len(treeCursor.path))
+			copy(branch.path, treeCursor.path)
+			treeCursor.path = treeCursor.path[:0]
+			paths = append(paths, branch)
 		} else if char == branchEndChar {
-			return tree, nil
+			if len(treeCursor.path) > 0 || rawRegex[i-1] == branchChar {
+				branch := newPathTree()
+				branch.path = treeCursor.path
+				paths = append(paths, branch)
+			}
+			return paths, nil
 		} else {
 			dir, err := getDirectionFromChar(char)
 			if err != nil {
-				return pathTree{}, err
+				return nil, err
 			}
-			tree.path = append(tree.path, dir)
+			treeCursor.path = append(treeCursor.path, dir)
 		}
 	}
 
-	return tree, nil
+	return []*pathTree{head}, nil
 }
 
 func makeGraph(rawRegex string, headCursor cursor, roomGrid grid) (*node, grid, int, error) {
@@ -432,5 +424,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", tree)
+	fmt.Printf("%+v\n", *(tree[0]))
 }
