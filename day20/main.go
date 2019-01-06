@@ -73,17 +73,19 @@ func newPathTree() *pathTree {
 	}
 }
 
-func (c *cursor) updateCoord(dir direction) {
+func getCoordFromDirection(dir direction, rowCursor, colCursor int) (row, col int) {
+	row, col = rowCursor, colCursor
 	switch dir {
 	case northDirection:
-		c.row--
+		row--
 	case eastDirection:
-		c.col++
+		col++
 	case southDirection:
-		c.row++
+		row++
 	case westDirection:
-		c.col--
+		col--
 	}
+	return
 }
 
 // Attaches a ndoe to the graph, returning
@@ -152,6 +154,23 @@ func (h *nodeHeap) updateDistance(n *node, newDistance int) {
 			break
 		}
 	}
+}
+
+func (g grid) addPath(path []direction, startingRow, startingCol int) (int, int) {
+	row, col := startingRow, startingCol
+	for _, dir := range path {
+		lastNode := g[row][col]
+		row, col = getCoordFromDirection(dir, row, col)
+		if g[row] == nil {
+			g[row] = map[int]*node{}
+		}
+		if g[row][col] == nil {
+			g[row][col] = newNode()
+		}
+		lastNode.attach(dir, g[row][col])
+	}
+
+	return row, col
 }
 
 func (g grid) print() {
@@ -325,48 +344,26 @@ func parseInput(rawRegex string) ([]*pathTree, error) {
 	return []*pathTree{head}, nil
 }
 
-func makeGraph(rawRegex string, headCursor cursor, roomGrid grid) (*node, grid, int, error) {
-	graphCursor := headCursor
-	// Keep track of the spaces we've already allocated so we can circle back to existing rooms
-	// While this typing might look excessive, it makes assignment a bit more optimal
-	if roomGrid == nil {
-		roomGrid = make(grid)
-		roomGrid[headCursor.row] = make(map[int]*node)
-		roomGrid[headCursor.row][headCursor.col] = headCursor.n
-	}
-	for i := 0; i < len(rawRegex); i++ {
-		char := rawRegex[i]
-		if char == branchStartChar {
-			_, _, skipCount, err := makeGraph(rawRegex[i+1:], graphCursor, roomGrid)
-			if err != nil {
-				return nil, nil, 0, err
-			}
-			i += skipCount
-		} else if char == branchChar {
-			// By resetting to the head no matter what when we hit a branch char, we are abusing a property of the detours that they always seem to circle back upon themselves.
-			graphCursor = headCursor
-		} else if char == branchEndChar {
-			return headCursor.n, roomGrid, i + 1, nil
-		} else {
-			dir, err := getDirectionFromChar(char)
-			if err != nil {
-				return nil, nil, 0, err
-			}
+func makeNodesFromTree(tree *pathTree) (*node, []*node) {
+	roomGrid := make(grid)
+	roomGrid[0] = make(map[int]*node)
+	roomGrid[0][0] = newNode()
+	roomGrid[0][0].distance = 0
+	_, _, roomGrid = makeGraph(tree, 0, 0, roomGrid)
 
-			graphCursor.updateCoord(dir)
-			if roomGrid[graphCursor.row] == nil {
-				roomGrid[graphCursor.row] = make(map[int]*node)
-			}
-			if roomGrid[graphCursor.row][graphCursor.col] == nil {
-				roomGrid[graphCursor.row][graphCursor.col] = newNode()
-			}
-			gridNode := roomGrid[graphCursor.row][graphCursor.col]
-			graphCursor.n.attach(dir, gridNode)
-			graphCursor.n = gridNode
+	return roomGrid[0][0], roomGrid.flatten()
+}
+
+func makeGraph(tree *pathTree, row, col int, roomGrid grid) (int, int, grid) {
+	if tree != nil {
+		row, col = roomGrid.addPath(tree.path, row, col)
+		for _, branch := range tree.branches {
+			branchRow, branchCol, _ := makeGraph(branch, row, col, roomGrid)
+			makeGraph(tree.next, branchRow, branchCol, roomGrid)
 		}
 	}
 
-	return headCursor.n, roomGrid, 0, nil
+	return row, col, roomGrid
 }
 
 // getShortestDistances gets the shortest distance to every node from a given head.
@@ -436,5 +433,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", *(tree[0]))
+
+	head, nodeList := makeNodesFromTree(tree[0])
+	shortestDistances := getShortestDistances(head, nodeList)
+	fmt.Println(part1(shortestDistances))
+	fmt.Println(part2(shortestDistances))
 }
