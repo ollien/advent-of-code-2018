@@ -181,12 +181,14 @@ func runAsDebug(registers registerSet, instructionPointerIndex int, instructions
 }
 
 // Run the program, taking the registers, the instruction pointer index, the instructions to execute, their unparsed equivalent, and a callback that will return a solution to the puzzle
-func run(registers registerSet, instructionPointerIndex int, instructions []instruction, rawInstructions []string, findAnswer func(currentRegisters registerSet, rawInstrunction string) (int, error)) (int, error) {
+func run(registers registerSet, instructionPointerIndex int, instructions []instruction, rawInstructions []string, findAnswer func(currentRegisters registerSet, rawInstrunction string, numInstructionsRun int) (int, error)) (int, error) {
+	n := 0
 	for registers[instructionPointerIndex] < len(instructions) {
 		instructionIndex := registers[instructionPointerIndex]
 		registers = instructions[instructionIndex](registers)
 		registers[instructionPointerIndex]++
-		result, err := findAnswer(registers, rawInstructions[instructionIndex])
+		n++
+		result, err := findAnswer(registers, rawInstructions[instructionIndex], n)
 		if err == nil {
 			return result, nil
 		} else if err != nil && !errors.Is(err, errNoResult) {
@@ -197,15 +199,28 @@ func run(registers registerSet, instructionPointerIndex int, instructions []inst
 	return 0, errNoResult
 }
 
+// Run the program, taking the registers, the instruction pointer index, the instructions to execute, their unparsed equivalent, and a callback that will return a solution to the puzzle
+func getNumInstructionsRun(registers registerSet, instructionPointerIndex int, instructions []instruction) int {
+	n := 0
+	for registers[instructionPointerIndex] < len(instructions) {
+		instructionIndex := registers[instructionPointerIndex]
+		registers = instructions[instructionIndex](registers)
+		registers[instructionPointerIndex]++
+		n++
+	}
+
+	return n
+}
+
 func part1(registers registerSet, instructionPointerIndex int, instructions []instruction, rawInstructions []string) int {
-	res, err := run(registers, instructionPointerIndex, instructions, rawInstructions, func(currentRegisters registerSet, currentRawInstruction string) (int, error) {
+	res, err := run(registers, instructionPointerIndex, instructions, rawInstructions, func(currentRegisters registerSet, currentRawInstruction string, _ int) (int, error) {
 		components := strings.Split(currentRawInstruction, " ")
 		// The input has an "eqrr" instruction that compares to register 0. Find it.
 		if components[0] != "eqrr" {
 			return 0, errNoResult
 		}
 
-		for _, component := range components {
+		for _, component := range components[1:3] {
 			if component == "0" {
 				return currentRegisters[5], nil
 			}
@@ -219,6 +234,56 @@ func part1(registers registerSet, instructionPointerIndex int, instructions []in
 	}
 
 	return res
+}
+
+func part2(registers registerSet, instructionPointerIndex int, instructions []instruction, rawInstructions []string) int {
+	// This is awful and takes about five minutes
+	// Eliminating the split would probably speed it up, but I'd either need to refactor this entire program (since I can't compare functions) or go based on instruction IDs, which is brittle.
+	seen := map[int]int{}
+	_, err := run(registers, instructionPointerIndex, instructions, rawInstructions, func(currentRegisters registerSet, currentRawInstruction string, numInstructionsRun int) (int, error) {
+		components := strings.Split(currentRawInstruction, " ")
+		if components[0] != "eqrr" {
+			return 0, errNoResult
+		}
+
+		valid := false
+		for _, component := range components[1:3] {
+			if component == "0" {
+				valid = true
+			}
+		}
+
+		if !valid {
+			return 0, errNoResult
+		}
+
+		val := currentRegisters[5]
+		if _, ok := seen[val]; ok {
+			fmt.Println("Found duplicate")
+			return -1, nil
+		}
+
+		seen[val] = numInstructionsRun
+
+		return 0, errNoResult
+	})
+
+	takenMin := false
+	min := 0
+	bestValue := 0
+	for value, count := range seen {
+		if !takenMin || (count > min || (count == min && value < bestValue)) {
+			takenMin = true
+			min = count
+			bestValue = value
+		}
+	}
+
+	if err != nil {
+		panic("Could not find solution to part 2 " + err.Error())
+	}
+
+	return bestValue
 }
 
 func main() {
@@ -244,4 +309,5 @@ func main() {
 
 	var registers registerSet
 	fmt.Println(part1(registers, instructionPointerIndex, instructions, rawInstructions[1:]))
+	fmt.Println(part2(registers, instructionPointerIndex, instructions, rawInstructions[1:]))
 }
